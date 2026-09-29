@@ -39,18 +39,19 @@ export function GisStudio() {
   }, []);
 
   const allLayers = [
+    ...GIS_LAYERS,
     ...backendLayers.map(l => {
       const metadata = l.metadata_json ? JSON.parse(l.metadata_json) : {};
       const matchingStatic = GIS_LAYERS.find(sl => sl.name === l.layer_type || sl.type === l.layer_type || sl.id === l.layer_type);
       return {
-        id: String(l.id),
+        id: `backend_${l.id}`,
+        backendId: l.id,
         name: l.layer_name,
         description: metadata.description || `Type: ${l.layer_type}`,
         categories: matchingStatic ? matchingStatic.categories : [{ name: l.layer_type, color: '#3B82F6' }],
         isBackend: true
       };
-    }),
-    ...GIS_LAYERS.filter(sl => !backendLayers.some(bl => bl.layer_type === sl.name || bl.layer_type === sl.type || bl.layer_type === sl.id))
+    })
   ];
 
   const handleLayerToggle = async (layerId: string) => {
@@ -61,7 +62,7 @@ export function GisStudio() {
       if (layerData?.isBackend && !backendGeoCache[layerId]) {
         setLoadingGeo(prev => ({ ...prev, [layerId]: true }));
         try {
-          const res = await fetchApi<any>(`/gis/layers/${layerId}/geojson`);
+          const res = await fetchApi<any>(`/gis/layers/${layerData.backendId || layerId}/geojson`);
           if (res.status === 'SUCCESS' && res.geojson) {
             setBackendGeoCache(prev => ({ ...prev, [layerId]: res.geojson }));
           }
@@ -165,7 +166,7 @@ export function GisStudio() {
 
             {/* Backend GIS Layers */}
             {backendLayers.map(layer => {
-              const layerId = String(layer.id);
+              const layerId = `backend_${layer.id}`;
               if (activeLayers[layerId] && backendGeoCache[layerId]) {
                 const layerDef = allLayers.find(l => l.id === layerId);
                 const categories = layerDef?.categories || [];
