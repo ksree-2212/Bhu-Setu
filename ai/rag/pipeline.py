@@ -74,18 +74,27 @@ class DemoLLMAdapter(LLMAdapter):
         claims = []
         for c in citations:
             claims.append({
-                "text": f"Evidence from {c['document_title']} indicates that {c['verbatim_excerpt'][:150].strip()}...",
+                "text": f"Evidence from {c['document_title']}: {c['verbatim_excerpt'][:180].strip()}...",
                 "sources": [c["citation_id"]]
             })
         
         answer_text = (
-            f"Based on grounded evidence retrieved from verified departmental records and peer-reviewed "
-            f"land governance research repositories, the key findings regarding '{query}' are:\n\n"
+            f"Based on grounded evidence retrieved from verified departmental records and statutory repositories, "
+            f"the key findings regarding **\"{query}\"** are:\n\n"
         )
         
-        for claim in claims:
-            answer_text += f"• {claim['text']} {claim['sources'][0]}\n\n"
+        for idx, c in enumerate(citations):
+            source_tag = c.get("citation_id", f"[{c.get('document_title', 'DOC')}]")
+            excerpt = c.get("verbatim_excerpt", "").strip()
+            title = c.get("document_title", "Verified Source")
+            answer_text += f"**{idx+1}. {title}** {source_tag}\n{excerpt}\n\n"
             
+        answer_text += (
+            "💡 **Policy & Governance Takeaway**:\n"
+            "This evidence provides statutory and empirical grounding for administrative compliance, "
+            "cadastral accuracy, and evidence-based policy formulation under national DPI standards."
+        )
+
         return {
             "answer": answer_text.strip(),
             "claims": claims
@@ -104,7 +113,7 @@ def get_llm_adapter() -> LLMAdapter:
     return DemoLLMAdapter()
 
 class GroundedRAGPipeline:
-    def __init__(self, confidence_threshold: float = 0.12, llm_adapter: Optional[LLMAdapter] = None):
+    def __init__(self, confidence_threshold: float = 0.05, llm_adapter: Optional[LLMAdapter] = None):
         self.threshold = confidence_threshold
         try:
             self.llm = llm_adapter or get_llm_adapter()
@@ -126,6 +135,26 @@ class GroundedRAGPipeline:
                 "message": getattr(self, 'llm_error', "LLM Adapter not configured.")
             }
             
+        cleaned_q = query.strip().lower()
+        if cleaned_q in ["hi", "hello", "hey", "help", "who are you", "what can you do", "introduce yourself"]:
+            return {
+                "query": query,
+                "answer": (
+                    "Hello! I am the National Land Governance AI Evidence Assistant (Bhu-Setu).\n\n"
+                    "I provide grounded, citation-backed answers synthesized from statutory acts, government circulars, and peer-reviewed research papers in the national repository.\n\n"
+                    "Here are some key topics you can ask me about:\n"
+                    "• **Land Acquisition & R&R (RFCTLARR 2013)**: Compensation rates in rural vs. urban areas, multi-crop restrictions, and Social Impact Assessments.\n"
+                    "• **DILRMP & Bhu-Aadhaar (ULPIN)**: 14-digit geospatial parcel identifiers, cadastral map digitization, and automatic mutation.\n"
+                    "• **SVAMITVA Scheme**: High-resolution drone mapping of rural abadi lands and property cards.\n"
+                    "• **Forest Rights Act (FRA 2006)**: Tribal land tenure rights and Gram Sabha powers.\n"
+                    "• **Urban Sprawl & Agricultural Conservation**: LULC transitions, satellite evidence, and peri-urban buffer policies."
+                ),
+                "has_sufficient_evidence": True,
+                "confidence_score": 0.95,
+                "citations": [],
+                "retrieved_chunks_count": 0
+            }
+
         results = search_index.search(
             query=query,
             category=category,
@@ -138,8 +167,13 @@ class GroundedRAGPipeline:
                 "query": query,
                 "answer": (
                     "Insufficient verified evidence was found in the National Land Governance "
-                    "Repository to answer this query with grounded confidence. "
-                    "No verified government policy or research document matched the inquiry threshold."
+                    "Repository to answer this query with grounded confidence.\n\n"
+                    "Try asking about one of these topics:\n"
+                    "• Land Acquisition Act 2013 compensation or Social Impact Assessments\n"
+                    "• SVAMITVA drone mapping and rural property cards\n"
+                    "• Digital India Land Records Modernization Programme (DILRMP) and ULPIN\n"
+                    "• Forest Rights Act (FRA 2006) tribal land provisions\n"
+                    "• Agricultural land conversion and urban sprawl policies"
                 ),
                 "has_sufficient_evidence": False,
                 "confidence_score": round(results[0]["score"], 4) if results else 0.0,

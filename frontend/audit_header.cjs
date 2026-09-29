@@ -3,13 +3,13 @@ const puppeteer = require('puppeteer');
 (async () => {
   const browser = await puppeteer.launch({ headless: 'new' });
   const page = await browser.newPage();
-  
+
   console.log("=== BROWSER TEST START ===");
 
   // TEST 1: Click Bhu-Setu logo -> Should go to /
   await page.goto('http://localhost:5173/dashboard', { waitUntil: 'domcontentloaded' });
   await new Promise(r => setTimeout(r, 1000));
-  
+
   await page.evaluate(() => {
     const el = document.querySelector('header a[href="/"]');
     if (el) el.click();
@@ -28,7 +28,7 @@ const puppeteer = require('puppeteer');
     if (el) el.click();
   });
   await new Promise(r => setTimeout(r, 500));
-  
+
   let dropdownExpanded = await page.evaluate(() => {
     return document.querySelector('button[aria-haspopup="menu"]').getAttribute('aria-expanded') === 'true';
   });

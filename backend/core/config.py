@@ -1,6 +1,11 @@
 import os
 from pathlib import Path
 from pydantic import BaseModel
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
+except ImportError:
+    pass
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 

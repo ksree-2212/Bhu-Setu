@@ -137,4 +137,42 @@ class DocumentService:
         doc["chunks"] = chunks
         return doc
 
+    def save_document(self, user_id: int, doc_id: int) -> bool:
+        existing = db_manager.execute_one(
+            "SELECT id FROM saved_research WHERE user_id = ? AND document_id = ?",
+            (user_id, doc_id)
+        )
+        if not existing:
+            db_manager.execute_insert(
+                "INSERT INTO saved_research (user_id, document_id) VALUES (?, ?)",
+                (user_id, doc_id)
+            )
+            return True
+        return False
+
+    def unsave_document(self, user_id: int, doc_id: int) -> bool:
+        db_manager.execute_update(
+            "DELETE FROM saved_research WHERE user_id = ? AND document_id = ?",
+            (user_id, doc_id)
+        )
+        return True
+
+    def list_saved_documents(self, user_id: int) -> List[Dict[str, Any]]:
+        query = """
+            SELECT d.*, sr.saved_at
+            FROM documents d
+            JOIN saved_research sr ON d.id = sr.document_id
+            WHERE sr.user_id = ?
+            ORDER BY sr.saved_at DESC
+        """
+        return db_manager.execute_query(query, (user_id,))
+
+    def get_saved_document_ids(self, user_id: int) -> List[int]:
+        rows = db_manager.execute_query(
+            "SELECT document_id FROM saved_research WHERE user_id = ?",
+            (user_id,)
+        )
+        return [r["document_id"] for r in rows]
+
 document_service = DocumentService()
+

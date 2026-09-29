@@ -22,7 +22,8 @@ from backend.api import (
     admin_routes,
     ai_routes,
     innovation_routes,
-    integration_routes
+    integration_routes,
+    notification_routes
 )
 
 app = FastAPI(

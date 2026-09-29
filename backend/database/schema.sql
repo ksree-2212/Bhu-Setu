@@ -141,6 +141,16 @@ CREATE TABLE IF NOT EXISTS workspace_items (
     FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS workspace_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    workspace_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    comment_text TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS scenarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     workspace_id INTEGER,
@@ -215,4 +225,40 @@ CREATE TABLE IF NOT EXISTS innovation_submissions (
     FOREIGN KEY(initiative_id) REFERENCES innovation_initiatives(id),
     FOREIGN KEY(submitter_id) REFERENCES users(id)
 );
+
+CREATE TABLE IF NOT EXISTS saved_research (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    document_id INTEGER NOT NULL,
+    saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY(document_id) REFERENCES documents(id) ON DELETE CASCADE,
+    UNIQUE(user_id, document_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_saved_research_user ON saved_research(user_id);
+
+CREATE TABLE IF NOT EXISTS policy_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id TEXT UNIQUE NOT NULL,
+    title TEXT NOT NULL,
+    region TEXT NOT NULL,
+    author TEXT NOT NULL,
+    generated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    doc_hash TEXT NOT NULL,
+    report_data_json TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id TEXT PRIMARY KEY,
+    user_id INTEGER,
+    category TEXT NOT NULL, -- RESEARCH, POLICY, DATASET, GIS, INNOVATION
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    is_read INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+
 

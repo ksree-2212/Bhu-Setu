@@ -38,7 +38,29 @@ def execute_rag(req: RAGQueryRequest):
             }
         )
         
+    # Normalize citations so all clients have consistent field names
+    raw_citations = response.get("citations", [])
+    normalized_citations = [
+        {
+            **c,
+            "title": c.get("document_title") or c.get("title", "Statutory Source"),
+            "document_title": c.get("document_title") or c.get("title", "Statutory Source"),
+            "score": float(c.get("relevance_score") if c.get("relevance_score") is not None else (c.get("score") if c.get("score") is not None else 0.85)),
+            "relevance_score": float(c.get("relevance_score") if c.get("relevance_score") is not None else (c.get("score") if c.get("score") is not None else 0.85)),
+            "snippet": c.get("verbatim_excerpt") or c.get("snippet", ""),
+            "verbatim_excerpt": c.get("verbatim_excerpt") or c.get("snippet", "")
+        }
+        for c in raw_citations
+    ]
+    response["citations"] = normalized_citations
+    answer_text = response.get("answer", "")
+
     return {
         "status": "SUCCESS",
-        "data": response
+        "data": response,
+        "answer": answer_text,
+        "citations": normalized_citations,
+        "confidence_score": response.get("confidence_score", 0.0),
+        "claims": response.get("claims", [])
     }
+

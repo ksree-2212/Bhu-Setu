@@ -87,8 +87,15 @@ function App() {
           <Route path="/data" element={<Navigate to="/data/datasets" replace />} />
 
           <Route path="/analytics" element={<Analytics />} />
+          
+          {/* Collaboration Group */}
           <Route path="/workspaces" element={<Workspaces />} />
+          <Route path="/workspaces/:id" element={<Workspaces />} />
           <Route path="/innovation" element={<InnovationPortal />} />
+          <Route path="/collaboration" element={<Navigate to="/workspaces" replace />} />
+          <Route path="/collaboration/workspaces" element={<Navigate to="/workspaces" replace />} />
+          <Route path="/collaboration/innovation" element={<Navigate to="/innovation" replace />} />
+
           <Route path="/governance/provenance" element={<Provenance />} />
           <Route path="/governance/audit" element={<AuditLogs />} />
           <Route path="/reports" element={<Navigate to="/data/insights" replace />} />
